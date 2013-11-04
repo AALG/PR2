@@ -64,9 +64,9 @@ public class TSPIO{
 	}
 
 	/* Print the tour */
-	public void outputToKattis(int[] tour){
+	public void outputToKattis(Node[] tour){
 		for(int i = 0; i < tour.length; i++){
-			System.out.println(tour[i]);
+			System.out.println(tour[i].ID);
 		}
 		
 	}
