@@ -48,6 +48,7 @@ public class TSP{
 		}
 		
 		io.outputToKattis(tour);
+		this.printTourLength(tour);
 	}
 	
 	/**
@@ -71,6 +72,15 @@ public class TSP{
 	
 	public void initializePointsKattis(){
 		points = io.readInputFromKattis();
+	}
+	
+	public void printTourLength(int[] tour){
+		double tourLength = 0;
+		for(int i = 1; i < tour.length; i++){
+			tourLength += dist(tour[i-1], tour[i]);
+			//System.out.println(tour[i-1] + " | " + tour[i]);
+		}
+		System.out.println("Length of tour: " + tourLength);
 	}
 	
 	public static void main(String[] args){
