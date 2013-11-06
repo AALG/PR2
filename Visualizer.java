@@ -6,15 +6,20 @@ import java.awt.event.*;
 public class Visualizer extends JFrame {
 
 	JPanel panel;
-	TSP tsp;
+	Node[] tsp;
 	int xDim, yDim;
 	
-	public Visualizer(TSP tsp){
-		super("TSPVis");
+	public Visualizer(Node[] tsp, int shiftToRight, String title){
+		super(title);
 		this.tsp = tsp;
 		xDim = 500;
 		yDim = xDim;
+		Dimension screenSize = new Dimension(Toolkit.getDefaultToolkit().getScreenSize());
 		setSize(xDim, yDim);
+		Dimension windowSize = new Dimension(getPreferredSize());
+		int wdwLeft = shiftToRight; //+ screenSize.width / 2 - windowSize.width / 2;
+        int wdwTop = 0;
+        setLocation(wdwLeft,wdwTop);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		panel = new GraphicsPanel();
 		add(panel);
@@ -30,25 +35,25 @@ public class Visualizer extends JFrame {
 			super.paintComponent(g);
 			int x;
 			int y;
-			for(Node node : tsp.points){
+			for(Node node : tsp){
 				x = new Double(node.x).intValue()*4;
 				y = new Double(node.y).intValue()*4;
 				g.drawOval(x, y, 10, 10);
 				g.fillOval(x, y, 10, 10);
-				if(node.equals(tsp.tour[0])){
+				if(node.equals(tsp[0])){
 					g.setColor(Color.BLUE);
 					g.fillOval(x-2, y-2, 15, 15);
 				}
-				if(node.equals(tsp.tour[tsp.tour.length-1])){
+				if(node.equals(tsp[tsp.length-1])){
 					g.setColor(Color.RED);
 					g.fillOval(x-2, y-2, 15, 15);
 				}
 				g.setColor(Color.BLACK);
 			}
-			for(int i = 1; i < tsp.tour.length; i++)
-				this.drawLine(g, tsp.tour[i-1], tsp.tour[i]);
+			for(int i = 1; i < tsp.length; i++)
+				this.drawLine(g, tsp[i-1], tsp[i]);
 			g.setColor(Color.GRAY);
-			this.drawLine(g, tsp.tour[tsp.tour.length-1], tsp.tour[0]);
+			this.drawLine(g, tsp[tsp.length-1], tsp[0]);
 		}
 		
 		public void drawLine(Graphics g, Node nodeStart, Node nodeEnd){
