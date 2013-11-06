@@ -10,7 +10,11 @@
 
 import java.util.*;
 
+
+
 public class TSP{
+    
+    static final boolean DEBUG = false;
 	
 	TSPIO io;
 	Node[] points;
@@ -213,30 +217,42 @@ public class TSP{
 
 	public static void main(String[] args){
         Thread mainThread = Thread.currentThread();
-        (new Thread(new DeadlineTimer(mainThread))).start();
+        Thread timer = new Thread(new DeadlineTimer(mainThread));
+        timer.start();
         
 		TSP tsp = new TSP();
 		tsp.initializePointsKattis();
-		//tsp.setUpMST();
-		long start = System.currentTimeMillis();
-		tsp.greedyTour();
+        if(DEBUG){
+		    //tsp.setUpMST();
+		    long start = System.currentTimeMillis();
+		    tsp.greedyTour();
 
-		//tsp.tour = tsp.points;
-		System.out.println("Tour length before two opt: " + tsp.calculateTourLength(tsp.tour));
-		Visualizer vis = new Visualizer(tsp.tour,0,"Greedy");
-		System.out.println("Time elapsed: " + (System.currentTimeMillis() - start) + " ms");
-        try{
-		tsp.twoOptTour();
-		    //tsp.printTour();
-		    System.out.println("Tour length after two opt: " + tsp.calculateTourLength(tsp.tour));
+		    //tsp.tour = tsp.points;
+		    System.out.println("Tour length before two opt: " + tsp.calculateTourLength(tsp.tour));
+		    Visualizer vis = new Visualizer(tsp.tour,0,"Greedy");
+		    System.out.println("Time elapsed: " + (System.currentTimeMillis() - start) + " ms");
+            try{
 		    tsp.twoOptTour();
-		    System.out.println("Tour length after two opt: " + tsp.calculateTourLength(tsp.tour));
-		    tsp.twoOptTour();
-		    System.out.println("Tour length after two opt: " + tsp.calculateTourLength(tsp.tour));
-        }catch(InterruptedException e) { }
-		Visualizer vis_2 = new Visualizer(tsp.tour,500,"2-OPT");
-		System.out.println("Time elapsed: " + (System.currentTimeMillis() - start) + " ms");
-
+		        //tsp.printTour();
+		        System.out.println("Tour length after two opt: " + tsp.calculateTourLength(tsp.tour));
+		        tsp.twoOptTour();
+		        System.out.println("Tour length after two opt: " + tsp.calculateTourLength(tsp.tour));
+		        tsp.twoOptTour();
+		        System.out.println("Tour length after two opt: " + tsp.calculateTourLength(tsp.tour));
+            }catch(InterruptedException e) { }
+		    Visualizer vis_2 = new Visualizer(tsp.tour,500,"2-OPT");
+		    System.out.println("Time elapsed: " + (System.currentTimeMillis() - start) + " ms");
+        }
+        else{
+            tsp.greedyTour();
+            try{
+		        tsp.twoOptTour();
+		        tsp.twoOptTour();
+		        tsp.twoOptTour();
+            }catch(InterruptedException e) { }
+            tsp.printTour();
+        }
+        timer.interrupt();
 //		double stop = System.currentTimeMillis();
 //		System.out.println("Total time: " + (stop - start) + " ms");
 	}
