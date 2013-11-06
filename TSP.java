@@ -94,7 +94,7 @@ public class TSP{
  
         double tourLength    = calculateTourLength(tour);
         double newTourLength = Double.MAX_VALUE;
-        Node[] newTour       = tour;
+        Node[] newTour       = tour.clone();
         boolean[] used = new boolean[tour.length];
         /* NOTE: This is a shitty implementation */
         for(int i = 0; i < tour.length - 1 ; i++){
@@ -109,7 +109,7 @@ public class TSP{
                     /* Evaluate the new tour */ 
                     if(newTourLength < tourLength){ /* Did the swap yield a shorter solution ? */
                             tourLength = newTourLength; /* Update tour length */
-                            break;
+                 
                     }else{
                             /* Swap back. Maybe this could be avoided */
                             swapNodes(j,i,newTour);
@@ -117,6 +117,8 @@ public class TSP{
                 }
 
         }
+
+        tour = newTour;
  
     }
 
@@ -216,24 +218,25 @@ public class TSP{
 		TSP tsp = new TSP();
 		tsp.initializePointsKattis();
 		//tsp.setUpMST();
-		//long start = System.currentTimeMillis();
+		long start = System.currentTimeMillis();
 		tsp.greedyTour();
 
 		//tsp.tour = tsp.points;
 		System.out.println("Tour length before two opt: " + tsp.calculateTourLength(tsp.tour));
-		//Visualizer vis = new Visualizer(tsp.tour,0,"Greedy");
-		//System.out.println("Time elapsed: " + (System.currentTimeMillis() - start) + " ms");
+		Visualizer vis = new Visualizer(tsp.tour,0,"Greedy");
+		System.out.println("Time elapsed: " + (System.currentTimeMillis() - start) + " ms");
         try{
-		    tsp.twoOptTour();
+		tsp.twoOptTour();
 		    //tsp.printTour();
 		    System.out.println("Tour length after two opt: " + tsp.calculateTourLength(tsp.tour));
 		    tsp.twoOptTour();
 		    System.out.println("Tour length after two opt: " + tsp.calculateTourLength(tsp.tour));
 		    tsp.twoOptTour();
 		    System.out.println("Tour length after two opt: " + tsp.calculateTourLength(tsp.tour));
-        }catch(InterruptedException e){ }
-		//Visualizer vis_2 = new Visualizer(tsp.tour,500,"2-OPT");
-		//System.out.println("Time elapsed: " + (System.currentTimeMillis() - start) + " ms");
+        }catch(InterruptedException e) { }
+		Visualizer vis_2 = new Visualizer(tsp.tour,500,"2-OPT");
+		System.out.println("Time elapsed: " + (System.currentTimeMillis() - start) + " ms");
+
 //		double stop = System.currentTimeMillis();
 //		System.out.println("Total time: " + (stop - start) + " ms");
 	}
