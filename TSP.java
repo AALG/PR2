@@ -90,7 +90,7 @@ public class TSP{
 	* edges instead of nodes and a more sophisticated data structure for
 	* holding nodes.
 	*/
-	public void twoOptTour(){
+	public void twoOptTour() throws InterruptedException{
 
 		double tourLength    = calculateTourLength(tour);
 		double newTourLength = Double.MAX_VALUE;
@@ -101,10 +101,13 @@ public class TSP{
 
 		/* Exclude start node by setting bound newTour.length - 1 */
 		for(int i = 0; i < tour.length - 1 ; i++){
+            
 			newTour = tour.clone(); /* Time consuming */
 
 			/* Begin at i + 1 */
 			for(int j = i + 1; j < tour.length; j++){
+                if(Thread.interrupted())
+                    throw new InterruptedException();
 				/* Swap nodes */
 				swapNodes(i,j,newTour);
 				newTourLength = calculateTourLength(newTour); 
@@ -173,17 +176,27 @@ public class TSP{
 	}
 
 	public static void main(String[] args){
+        Thread mainThread = Thread.currentThread();
+        (new Thread(new DeadlineTimer(mainThread))).start();
+        
 		TSP tsp = new TSP();
 //		double start = System.currentTimeMillis();
 		tsp.initializePointsKattis();
 		//tsp.setUpMST();
 		
 		tsp.greedyTour();
-		System.out.println("Tour length before two opt: " + tsp.calculateTourLength(tsp.tour));
-		Visualizer vis = new Visualizer(tsp.tour,0,"Greedy");
-		tsp.twoOptTour();
-		System.out.println("Tour length after two opt: " + tsp.calculateTourLength(tsp.tour));
-		Visualizer vis_2 = new Visualizer(tsp.tour,500,"2-OPT");
+		//System.out.println("Tour length before two opt: " + tsp.calculateTourLength(tsp.tour));
+		//Visualizer vis = new Visualizer(tsp.tour,0,"Greedy");
+        try{
+		    tsp.twoOptTour();
+        }catch(InterruptedException e){ 
+            //System.out.println("FHFHFH"); 
+            tsp.printTour();
+            System.exit(0); 
+        }
+		//System.out.println("Tour length after two opt: " + tsp.calculateTourLength(tsp.tour));
+		//Visualizer vis_2 = new Visualizer(tsp.tour,500,"2-OPT");
+        tsp.printTour();
 //		double stop = System.currentTimeMillis();
 //		System.out.println("Total time: " + (stop - start) + " ms");
 	}
