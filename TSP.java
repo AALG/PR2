@@ -91,43 +91,79 @@ public class TSP{
 	* holding nodes.
 	*/
 	public void twoOptTour(){
+ 
+        double tourLength    = calculateTourLength(tour);
+        double newTourLength = Double.MAX_VALUE;
+        Node[] newTour       = tour;
+        boolean[] used = new boolean[tour.length];
+        /* NOTE: This is a shitty implementation */
+        for(int i = 0; i < tour.length - 1 ; i++){
 
-		double tourLength    = calculateTourLength(tour);
-		double newTourLength = Double.MAX_VALUE;
-		Node[] newTour       = null;
-		Node tmp             = null;
+                /* Begin at i + 1 */
+                for(int j = i + 1; j < tour.length; j++){
+                    /* Swap nodes */
+                    newTourLength = swapNodesAndCalculateDistance(i,j,newTour,tourLength);
+                    
+                    /* Evaluate the new tour */ 
+                    if(newTourLength < tourLength){ /* Did the swap yield a shorter solution ? */
+                            tourLength = newTourLength; /* Update tour length */
+                            break;
+                    }else{
+                            /* Swap back. Maybe this could be avoided */
+                            swapNodes(j,i,newTour);
+                    }       
+                }
 
-		/* NOTE: This is a shitty implementation */
+        }
+ 
+    }
 
-		/* Exclude start node by setting bound newTour.length - 1 */
-		for(int i = 0; i < tour.length - 1 ; i++){
-			newTour = tour.clone(); /* Time consuming */
 
-			/* Begin at i + 1 */
-			for(int j = i + 1; j < tour.length; j++){
-				/* Swap nodes */
-				swapNodes(i,j,newTour);
-				newTourLength = calculateTourLength(newTour); 
-				if(newTourLength < tourLength){ /* Did the swap yield a shorter solution ? */
-					tour = newTour; /* Set the shorter tour to our main tour */
-					tourLength = newTourLength; /* Update tour length */
-					break; /* break inner loop and continue to look for an even shorter solution */
-				}else{
-					/* Swap back. Should not be needed in a good implementation */
-					swapNodes(j,i,newTour);
-				}	
-			}
-
-		}
-
-	}
-
-	/* Shitty function for swapping nodes */
+	/* Shitty function for swapping nodes and calculating the distance after swap */
 	public void swapNodes(int i, int j, Node[] newTour){
+		
+
 		Node tmp   = newTour[j];
 		newTour[j] = newTour[i];
 		newTour[i] = tmp;
+
 	}
+
+  /* Shitty function for swapping nodes and calculating the distance after swap */
+    public double swapNodesAndCalculateDistance(int i, int j, Node[] newTour, double tourLength){
+
+        double val1 = dist(newTour[i],newTour[i+1]);
+        if(i != 0){
+                val1 += dist(newTour[i-1], newTour[i]);
+        }else
+                val1 += dist(newTour[newTour.length-1],newTour[i]);
+
+        double val2 = dist(newTour[j-1], newTour[j]);
+        if(j != newTour.length - 1)
+                val2 += dist(newTour[j], newTour[j+1]);
+        else
+                val2 += dist(newTour[j], newTour[0]);
+
+        tourLength = tourLength - (val1 + val2);
+
+        Node tmp   = newTour[j];
+        newTour[j] = newTour[i];
+        newTour[i] = tmp;
+
+        val1 = dist(newTour[i],newTour[i+1]);
+        if(i != 0){
+                val1 += dist(newTour[i-1], newTour[i]);
+        }else
+                val1 += dist(newTour[newTour.length-1],newTour[i]);
+
+        val2 = dist(newTour[j-1], newTour[j]);
+        if(j != newTour.length - 1)
+                val2 += dist(newTour[j], newTour[j+1]);
+        else
+                val2 += dist(newTour[j], newTour[0]);
+        tourLength = tourLength + val1 + val2;
+        return tourLength;
+    }
 
 	/**
 	 * Calculate the euclidian distance between
@@ -174,16 +210,23 @@ public class TSP{
 
 	public static void main(String[] args){
 		TSP tsp = new TSP();
-//		double start = System.currentTimeMillis();
 		tsp.initializePointsKattis();
 		//tsp.setUpMST();
-		
+		//long start = System.currentTimeMillis();
 		tsp.greedyTour();
+		//tsp.tour = tsp.points;
 		System.out.println("Tour length before two opt: " + tsp.calculateTourLength(tsp.tour));
-		Visualizer vis = new Visualizer(tsp.tour,0,"Greedy");
+		//Visualizer vis = new Visualizer(tsp.tour,0,"Greedy");
+		//System.out.println("Time elapsed: " + (System.currentTimeMillis() - start) + " ms");
+		tsp.twoOptTour();
+		//tsp.printTour();
+		System.out.println("Tour length after two opt: " + tsp.calculateTourLength(tsp.tour));
 		tsp.twoOptTour();
 		System.out.println("Tour length after two opt: " + tsp.calculateTourLength(tsp.tour));
-		Visualizer vis_2 = new Visualizer(tsp.tour,500,"2-OPT");
+		tsp.twoOptTour();
+		System.out.println("Tour length after two opt: " + tsp.calculateTourLength(tsp.tour));
+		//Visualizer vis_2 = new Visualizer(tsp.tour,500,"2-OPT");
+		//System.out.println("Time elapsed: " + (System.currentTimeMillis() - start) + " ms");
 //		double stop = System.currentTimeMillis();
 //		System.out.println("Total time: " + (stop - start) + " ms");
 	}
