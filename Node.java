@@ -10,7 +10,6 @@ public class Node{
 	public double x;
 	public double y;
 	private LinkedList<Edge> edges;
-	
 	public Node(double x, double y, int ID){
 		this.x  = x;
 		this.y  = y;

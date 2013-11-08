@@ -12,7 +12,7 @@ public class DeadlineTimer implements Runnable {
 
     public void run() {
         try{
-            Thread.sleep(1500);
+            Thread.sleep(10000);
             mainThread.interrupt();
         }catch(InterruptedException e){ }
     }
