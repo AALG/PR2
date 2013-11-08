@@ -4,7 +4,7 @@
 * Link: https://kth.kattis.scrool.se/problems/oldkattis:tsp
 *
 * Royal School of Technology - Computer Science
-* @author Fredrik Öman    - frdo@kth.se
+* @author Fredrik Oman    - frdo@kth.se
 * @author Alfred Krappman - krappman@kth.se
 */
 
@@ -14,7 +14,7 @@ import java.util.*;
 
 public class TSP{
     
-    static final boolean DEBUG = false;
+    static final boolean DEBUG = true;
 	
 	TSPIO io;
 	Node[] points;
@@ -246,9 +246,8 @@ public class TSP{
         else{
             tsp.greedyTour();
             try{
-		        tsp.twoOptTour();
-		        tsp.twoOptTour();
-		        tsp.twoOptTour();
+                while(true)
+		            tsp.twoOptTour();
             }catch(InterruptedException e) { }
             tsp.printTour();
         }
