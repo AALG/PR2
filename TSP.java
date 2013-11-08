@@ -11,16 +11,16 @@
 import java.util.*;
 
 
-
 public class TSP{
     
-    static final boolean DEBUG = true;
+    static final boolean DEBUG = false;
 	
 	TSPIO io;
 	Node[] points;
 	Node mstRoot;
 	Node[] tour;
 	double[][] distMatrix;
+    static long deadline;
 	public TSP(){
 		io = new TSPIO();
 	}
@@ -31,7 +31,6 @@ public class TSP{
 		for(Node base : points){
 			for(Node connectTo : points){
 				if(base != connectTo){
-					dist = dist(base, connectTo);
 					edge = new Edge(connectTo, dist);
 					base.connectTo(edge);
 				}
@@ -113,8 +112,8 @@ public class TSP{
 
 	/**
 	* Performs 2-OPT on a given tour. Note that this implementation
-	* is NOT by any means optimal.
-	* A solution to a more optimal implementation could be to use
+	* is by any means optimal.
+	* A less optimal implementation could be to use
 	* edges instead of nodes and a more sophisticated data structure for
 	* holding nodes.
 	*/
@@ -129,7 +128,7 @@ public class TSP{
 
                 /* Begin at i + 1 */
                 for(int j = i + 1; j < tour.length; j++){
-                    if(Thread.interrupted())
+                    if(System.currentTimeMillis() > deadline - 600)
                         throw new InterruptedException();
                     /* Swap nodes */
                     newTourLength = swapNodesAndCalculateDistance(i,j,newTour,tourLength);
@@ -241,9 +240,11 @@ public class TSP{
 		System.out.println("Length of tour: " + tourLength);
 	}
 	
-	public double calculateTourLength(Node[] tour){
+	public double calculateTourLength(Node[] tour) throws InterruptedException{
 		double tourLength = 0;
 		for(int i = 1; i < tour.length; i++){
+            if(System.currentTimeMillis() > deadline - 600)
+                throw new InterruptedException();
 			tourLength += getDistanceFromMatrix(tour[i-1], tour[i]);
 		}
 		tourLength += getDistanceFromMatrix(tour[tour.length-1], tour[0]);
@@ -254,11 +255,11 @@ public class TSP{
 		io.outputToKattis(tour);
 	}
 
-	public static void main(String[] args){
-        Thread mainThread = Thread.currentThread();
-        Thread timer = new Thread(new DeadlineTimer(mainThread));
-        timer.start();
-        
+	public static void main(String[] args){ 
+        deadline = System.currentTimeMillis() + 2000;
+        //Thread mainThread = Thread.currentThread();
+        //Thread timer = new Thread(new DeadlineTimer(mainThread, deadline));
+        //timer.start();
 		TSP tsp = new TSP();
 		tsp.initializePointsKattis();
         if(DEBUG){
@@ -267,10 +268,11 @@ public class TSP{
 		    tsp.greedyTour();
 
 		    //tsp.tour = tsp.points;
-		    System.out.println("Tour length before two opt: " + tsp.calculateTourLength(tsp.tour));
-		    Visualizer vis = new Visualizer(tsp.tour.clone(),0,"Greedy");
-		    System.out.println("Time elapsed: " + (System.currentTimeMillis() - start) + " ms");
+		    
             try{
+                System.out.println("Tour length before two opt: " + tsp.calculateTourLength(tsp.tour));
+		        Visualizer vis = new Visualizer(tsp.tour.clone(),0,"Greedy");
+		        System.out.println("Time elapsed: " + (System.currentTimeMillis() - start) + " ms");
 		        tsp.twoOptTour();
 		        //tsp.printTour();
 		        System.out.println("Tour length after two opt: " + tsp.calculateTourLength(tsp.tour));
@@ -285,12 +287,15 @@ public class TSP{
         else{
             tsp.greedyTour();
             try{
-                while(true)
-		            tsp.twoOptTour();
+                while(true){
+                    if(System.currentTimeMillis() > deadline - 600)
+                        break;
+	                tsp.twoOptTour();
+                }
             }catch(InterruptedException e) { }
             tsp.printTour();
         }
-        timer.interrupt();
+        //timer.interrupt();
 //		double stop = System.currentTimeMillis();
 //		System.out.println("Total time: " + (stop - start) + " ms");
 	}
