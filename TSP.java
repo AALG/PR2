@@ -111,6 +111,54 @@ public class TSP{
 			return distMatrix[n2.ID][n1.ID];
 	}
 
+	/* UNOPTIMIZED 2-OPT */
+    public void twoOptTourTest() throws InterruptedException{
+ 
+        double tourLength = calculateTourLength(tour);
+        double newTourLength = Double.MAX_VALUE;
+        boolean[] used = new boolean[tour.length];
+               Node[] possibleRoute;
+        
+        for(int i = 0; i < tour.length; i++){
+            /* Begin at i + 1 we don't have to evaluate the same node again */
+            for(int j = i + 1; j < tour.length - 1; j++){
+            	if(System.currentTimeMillis() > deadline)
+            		throw new InterruptedException();
+                /* Swap nodes and calculate the new tour length */
+                possibleRoute = swapNodesTest(i,j,tour);
+                newTourLength = calculateTourLength(possibleRoute);
+                /* Evaluate the new tour && (tourLength - newTourLength) > 10*/
+                if(newTourLength < tourLength ){ /* Did the swap yield a shorter solution ? */
+                        tour = possibleRoute; /* Set tour to the shorter tour */
+                        return;                                 /* Exit */
+                }
+            }
+
+        }
+    }
+
+    /* UNOPTIMIZED SWAP. */
+        public Node[] swapNodesTest(int i, int j, Node[] tour){
+                Node[] possibleRoute = new Node[points.length];
+                //Add 0 to i-1 in order
+                for(int p = 0; p < i; p++){
+                        possibleRoute[p] = tour[p];
+                }
+                //Add i to j in reversed order
+                int c = i;
+                for(int p = j; p >= i ; p--){
+                        possibleRoute[c] = tour[p];
+                        c++;
+                }
+                //Add k+1 to the end of the tour in order
+                for(int p = j + 1; p < tour.length; p++){
+                        possibleRoute[p] = tour[p];
+                }
+                
+                return possibleRoute;
+
+        }
+
 
 	/**
 	* Performs 2-OPT on a given tour. Note that this implementation
@@ -130,7 +178,7 @@ public class TSP{
 
                 /* Begin at i + 1 */
                 for(int j = i + 1; j < tour.length; j++){
-                    if(System.currentTimeMillis() > deadline - 600)
+                    if(System.currentTimeMillis() > deadline)
                         throw new InterruptedException();
                     /* Swap nodes */
                     newTourLength = swapNodesAndCalculateDistance(i,j,newTour,tourLength);
@@ -242,11 +290,11 @@ public class TSP{
 		System.out.println("Length of tour: " + tourLength);
 	}
 	
-	public double calculateTourLength(Node[] tour) throws InterruptedException{
+	public double calculateTourLength(Node[] tour){
 		double tourLength = 0;
 		for(int i = 1; i < tour.length; i++){
-            if(System.currentTimeMillis() > deadline - 600)
-                throw new InterruptedException();
+            /*if(System.currentTimeMillis() > deadline)
+                throw new InterruptedException();*/
 			tourLength += getDistanceFromMatrix(tour[i-1], tour[i]);
 		}
 		tourLength += getDistanceFromMatrix(tour[tour.length-1], tour[0]);
@@ -258,7 +306,7 @@ public class TSP{
 	}
 
 	public static void main(String[] args){ 
-        deadline = System.currentTimeMillis() + 2000;
+        deadline = System.currentTimeMillis() + 1400;
         //Thread mainThread = Thread.currentThread();
         //Thread timer = new Thread(new DeadlineTimer(mainThread, deadline));
         //timer.start();
@@ -273,14 +321,14 @@ public class TSP{
 		    
             try{
                 System.out.println("Tour length before two opt: " + tsp.calculateTourLength(tsp.tour));
-		        Visualizer vis = new Visualizer(tsp.tour.clone(),0,"Greedy");
+		        Visualizer vis = new Visualizer(tsp.tour,0,"Greedy");
 		        System.out.println("Time elapsed: " + (System.currentTimeMillis() - start) + " ms");
-		        tsp.twoOptTour();
+		        tsp.twoOptTourTest();
 		        //tsp.printTour();
 		        System.out.println("Tour length after two opt: " + tsp.calculateTourLength(tsp.tour));
-		        tsp.twoOptTour();
+		        tsp.twoOptTourTest();
 		        System.out.println("Tour length after two opt: " + tsp.calculateTourLength(tsp.tour));
-		        tsp.twoOptTour();
+		        tsp.twoOptTourTest();
 		        System.out.println("Tour length after two opt: " + tsp.calculateTourLength(tsp.tour));
             }catch(InterruptedException e) { }
 		    Visualizer vis_2 = new Visualizer(tsp.tour,500,"2-OPT");
@@ -290,9 +338,9 @@ public class TSP{
             tsp.greedyTour();
             try{
                 while(true){
-                    if(System.currentTimeMillis() > deadline - 600)
+                    if(System.currentTimeMillis() > deadline)
                         break;
-	                tsp.twoOptTour();
+	                tsp.twoOptTourTest();
                 }
             }catch(InterruptedException e) { }
             tsp.printTour();
