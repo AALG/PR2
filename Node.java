@@ -10,11 +10,14 @@ public class Node{
 	public double x;
 	public double y;
 	private LinkedList<Edge> edges;
+	public Node tourNeighbour1;
+	public Node tourNeighbour2;
 	public Node(double x, double y, int ID){
 		this.x  = x;
 		this.y  = y;
 		this.ID = ID;
 		edges = new LinkedList<Edge>();
+		
 	}
 
 	public Node(Node oldNode){
@@ -49,6 +52,22 @@ public class Node{
 		
 	}
 	
+	public void reconnect(Node oldNode, Node newNode ){
+		if(tourNeighbour1.ID == oldNode.ID)
+			tourNeighbour1 = newNode;
+		else if(tourNeighbour2.ID == oldNode.ID){
+			tourNeighbour2 = newNode;
+		}else
+			System.out.println("FAIL");
+	}
+
+	public Node getNextTourNeighbour(Node previous){
+		if(previous.ID == tourNeighbour1.ID)
+			return tourNeighbour2;
+		else
+			return tourNeighbour1;
+	}
+
 	public String toString(){
 		String toRet = "";
 		toRet += "##NODE##\n";

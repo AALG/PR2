@@ -31,9 +31,9 @@ public class TSP{
 	* algorithm are used as a "base case" in KATTIS. 
 	*/
 	public void greedyTour(){
-        Node[] tour      = new Node[points.length];
-        boolean[] used  = new boolean[points.length];
-        
+        Node[] tour       = new Node[points.length];
+        boolean[] used    = new boolean[points.length];
+    
         // Start at first point
      
         tour[0] = points[0];
@@ -47,108 +47,170 @@ public class TSP{
                 cityToConsider = points[j];
                 if(!used[cityToConsider.ID]){
                     if(getDistanceFromMatrix(tour[i-1], cityToConsider) != 0 && 
-                    	(closestCity == null || 
+                        (closestCity == null || 
                         getDistanceFromMatrix(tour[i-1], cityToConsider) < 
                         getDistanceFromMatrix(tour[i-1], closestCity))){
                         closestCity =  cityToConsider;
                     }
                 }
             }
-
-        	tour[i] = closestCity;
-        	used[closestCity.ID] = true;
+ 
+                tour[i] = closestCity;
+                used[closestCity.ID] = true;
         
-    	
+        
         }
         this.tour = tour;
        
         //this.printTourLength(tour);
     }
 	
-	/* UNOPTIMIZED 2-OPT */
+	public void setTourNeighbours(){
+		tour[0].tourNeighbour1 = tour[points.length-1];
+		tour[0].tourNeighbour2 = tour[1];
+		for(int i = 1; i < points.length - 1; i++){
+			tour[i].tourNeighbour1 = tour[i-1];
+			tour[i].tourNeighbour2 = tour[i+1];
+		}
+		tour[points.length-1].tourNeighbour1 = tour[points.length - 2];
+		tour[points.length-1].tourNeighbour2 = tour[0];
+	}
+
+    /* 2-OPT */
     public void twoOptTour() throws InterruptedException{
- 
-        double tourLength = calculateTourLength(tour);
-        double newTourLength = Double.MAX_VALUE;
-        boolean[] used = new boolean[tour.length];
-        Node[] possibleRoute;
         Random rand = new Random();
 
-        for(int i = rand.nextInt(points.length - 1); i < tour.length; i++){
+        for(int i = 0; i < tour.length; i++){
             /* Begin at i + 1 we don't have to evaluate the same node again */
-            for(int j = i+1; j < tour.length - 1; j++){
+            for(int j = 0; j < tour.length; j++){
             	if(System.currentTimeMillis() > deadline)
             		throw new InterruptedException();
-                /* Swap nodes and calculate the new tour length */
-                possibleRoute = swapNodes(i,j,tour);
-                if(possibleRoute != null){
-	            	newTourLength = calculateTourLength(possibleRoute);
-	            	if(newTourLength < tourLength){ /* Did the swap yield a shorter solution ? */
-	                	    tour = possibleRoute; /* Set tour to the shorter tour */
-	                    	return;                                 /* Exit */
-	            	}
-	            }
-                
+                /* Swap nodes */
+                if(swapNodes(i,j,tour))
+                	return;              
             }
 
         }
     }
 
+    public void twoOptTourTest() throws InterruptedException{
+    	Node start = tour[0];
+    	Node tmp;
+    	Node previousOuter = tour[0];
+    	Node currentOuter  = tour[0];
+    	Node previousInner = null;
+    	Node currentInner  = null;
+        while(true){
+        	currentInner  = currentOuter.getNextTourNeighbour(previousOuter);
+        	previousInner = currentOuter;
+        	while(currentInner.ID != currentOuter.ID){
+            	if(System.currentTimeMillis() > deadline)
+            		throw new InterruptedException();
+                /* Swap nodes */
+                if(swapNodesTest(currentOuter,currentInner))
+                	return;              
+               	tmp = currentInner;
+               	currentInner = currentInner.getNextTourNeighbour(previousInner);
+               	previousInner = tmp;
+
+            }
+            tmp = currentOuter;
+            currentOuter = currentOuter.getNextTourNeighbour(previousOuter);
+            previousOuter = tmp;
+            if(currentOuter.ID == start.ID)
+            	break;
+
+        }
 
 
-    /* UNOPTIMIZED SWAP. */
-    public Node[] swapNodes(int i, int j, Node[] tour){
-    		if( i > j){
+    }
+
+
+    public boolean swapNodesTest(Node a, Node b){
+    	if(a.ID == b.ID)
+    		return false;
+
+    	double edgeDistanceBefore = 0;
+    	double edgeDistanceAfter  = 0;
+
+
+    	edgeDistanceBefore =  getDistanceFromMatrix(a,a.tourNeighbour1);
+    	edgeDistanceBefore += getDistanceFromMatrix(b, b.tourNeighbour2);
+
+    	edgeDistanceAfter  =  getDistanceFromMatrix(a, b.tourNeighbour2);
+    	edgeDistanceAfter  += getDistanceFromMatrix(b, a.tourNeighbour1);
+
+
+    	if(edgeDistanceBefore <= edgeDistanceAfter)
+    		return false;
+
+    	a.tourNeighbour1.reconnect(a,b);
+    	b.tourNeighbour2.reconnect(b,a);
+
+    	Node tmp = a.tourNeighbour1;
+    	a.tourNeighbour1 = b.tourNeighbour2;
+    	b.tourNeighbour2 = tmp;
+
+    	return true;
+
+
+
+    }
+
+    public boolean swapNodes(int i, int j, Node[] tour){
+    	if( i > j ){
     			int t = i;
     			i = j;
     			j = t;
-    		}
-    		if(i == j)
-    			return null;
-            Node[] possibleRoute = new Node[tour.length];
-            //Add 0 to i-1 in order
-            for(int p = 0; p < i; p++){
-                    possibleRoute[p] = tour[p];
-            }
-            //Add i to j in reversed order
-            int c = j;
-            for(int p = i; p <= c ; p++){
-            		possibleRoute[c] = tour[p];
-            		possibleRoute[p] = tour[c];
-                    c--;
-            }
-            //Add k+1 to the end of the tour in order
-            for(int p = j + 1; p < tour.length; p++){
-                    possibleRoute[p] = tour[p];
-            }
-            
-            return possibleRoute;
-
-    }
-   
-
-
-    public void printMatrix(){
-
-    	for(int i = 0; i < points.length; i++){
-    		for(int j = 0; j < points.length; j++){
-    			System.out.print(" [" +Math.floor(distMatrix[i][j])+"]");
-    		}
-    		System.out.println("");
     	}
+    	/* If below statement is true, it's not necessary to swap */
+    	if(i == 0 && j == tour.length - 1 || i == j){
+    		return false;
+    	}
+
+    	Node iNode = tour[i];
+    	Node jNode = tour[j];
+    	double edgeDistanceBefore;
+    	double edgeDistanceAfter;
+    	double pi;
+    	if(i != 0){
+    		edgeDistanceBefore = getDistanceFromMatrix(iNode, tour[i-1]);
+    		edgeDistanceAfter  = getDistanceFromMatrix(jNode, tour[i-1]); 
+    	}else{
+    		edgeDistanceBefore = getDistanceFromMatrix(iNode, tour[points.length-1]);
+    		edgeDistanceAfter  = getDistanceFromMatrix(jNode, tour[points.length-1]); 
+    	}
+    	if(j != points.length-1){
+    		edgeDistanceBefore += getDistanceFromMatrix(jNode, tour[j+1]);
+    		edgeDistanceAfter  += getDistanceFromMatrix(iNode, tour[j+1]);
+    		
+    	}else{
+    		edgeDistanceBefore += getDistanceFromMatrix(jNode, tour[0]);
+    		edgeDistanceAfter  += getDistanceFromMatrix(iNode, tour[0]);
+    	}
+
+    	/* The swap won't yield a better tour */
+    	if(edgeDistanceAfter >= edgeDistanceBefore)
+    		return false;
+    	/* The swap will probably make the tour shorter */
+    	int c = j;
+    	Node tmp;
+    	for(int p = i; p <= c; p++){
+    		tmp = tour[p];
+    		tour[p] = tour[c];
+    		tour[c] = tmp;
+    		c--;
+    	}
+
+    	return true;
     }
 
 	public void calculateDistances(){
-		Node from = null;
-		Node to   = null;
-		double minimumDistance = Double.MAX_VALUE;
-		for(int i = 0; i < points.length - 1; i++){
-			from = points[i];
-			for(int j = i + 1; j < points.length; j++){
-				to = points[j];
-				distMatrix[i][j] = dist(from,to);
-			}
-		}
+		for(int i = 0; i < points.length - 1; i++)
+			for(int j = i + 1; j < points.length; j++)
+				distMatrix[i][j] = dist(points[i],points[j]);
+			
+		
 	}
 
 
@@ -241,77 +303,116 @@ public class TSP{
 		points = io.readInputFromKattis();
 		distMatrix = new double[points.length][points.length];
 		calculateDistances();
-		//printMatrix();
 	}
 	
 	public double calculateTourLength(Node[] tour){
 		double tourLength = 0;
 		for(int i = 1; i < tour.length; i++){
-            /*if(System.currentTimeMillis() > deadline)
-                throw new InterruptedException();*/
 			tourLength += getDistanceFromMatrix(tour[i-1], tour[i]);
 		}
 		tourLength += getDistanceFromMatrix(tour[tour.length-1], tour[0]);
 		return tourLength;
 	}
 
+	public double calculateTourLengthTest(Node start){
+		Node previous = start;
+		Node next = start.tourNeighbour1;
+		double tourLength = 0;
+		Node tmp;
+		while(true){
+			tourLength += getDistanceFromMatrix(previous,next);
+			tmp = next;
+			next = next.getNextTourNeighbour(previous);
+			previous = tmp;
+			if(next.ID == start.ID){
+				tourLength += getDistanceFromMatrix(previous,next);
+				break;
+			}
+		}
+
+		return tourLength;
+	}
+
 	public void printTour(){
 		io.outputToKattis(tour);
 	}
-	public void printTourTest(Node[] t){
-		io.outputToKattis(t);
+	public void printTourTest(Node start){
+		Node previous = start;
+		Node next = start.tourNeighbour1;
+		double tourLength = 0;
+		System.out.println(start.ID);
+		Node tmp;
+		while(true){
+			System.out.println(next.ID);
+			tmp = next;
+			next = next.getNextTourNeighbour(previous);
+			previous = tmp;
+			if(next.ID == start.ID){
+				break;
+			}
+		}
 	}
-	public static void main(String[] args){
-        TSP tsp = new TSP();
-        tsp.initializePoints();
-        tsp.setUpCompleteGraph();
 
-        /*deadline = System.currentTimeMillis() + 1500;
+	public void fak(){
+		for(Node n : points){
+			System.out.println("Node: "+ n.ID + " N1: " + n.tourNeighbour1.ID + " N2: " + n.tourNeighbour2.ID);
+		}	
+	}
+
+	public static void main(String[] args){
+		double before;
+		double after;
+		long start;
+		long stop;
+		/********/
+        deadline = System.currentTimeMillis() + 1600;
         Thread mainThread = Thread.currentThread();
         Thread timer = new Thread(new DeadlineTimer(mainThread, deadline));
         timer.start();
 		TSP tsp = new TSP();
 		tsp.initializePoints();
-        if(DEBUG){
-		    //tsp.setUpMST();
-		    long start = System.currentTimeMillis();
-		    tsp.greedyTour();
+        /********/
 
-		    //tsp.tour = tsp.points;
-		    double before = tsp.calculateTourLength(tsp.tour); 
-            try{
-            	
-                System.out.println("Tour length before two opt: " + before);
-		        //Visualizer vis = new Visualizer(tsp.tour,0,"Greedy");
-		        System.out.println("Time elapsed: " + (System.currentTimeMillis() - start) + " ms");
-		        int i = 0;
-		        
-		        while(i < 500) { tsp.twoOptTour(); i++; }
-		        
-            }catch(InterruptedException e) { }
-		    //Visualizer vis_2 = new Visualizer(tsp.tour,500,"2-OPT");
-		    double after = tsp.calculateTourLength(tsp.tour);
-		    double improvement = 100.0 * Math.round(1000* ( (before - after)/before) )/1000.0;
-		    System.out.println("Improvement after two opt: " + (before - after));
-		    System.out.println("Time elapsed: " + (System.currentTimeMillis() - start) + " ms");
-        }
-        else{
-            tsp.greedyTour();
-            try{
-            	int i = 0;
-                while(i < 100){
-                    if(System.currentTimeMillis() > deadline)
-                        break;
-	                tsp.twoOptTour();
-	                i++;
-                }
-            }catch(Exception e) { }
-            tsp.printTour();
-        }
-        timer.interrupt();
-//		double stop = System.currentTimeMillis();
-//		System.out.println("Total time: " + (stop - start) + " ms");
-		*/
+        if(DEBUG){
+        	start = System.currentTimeMillis();
+        	tsp.greedyTour();
+        	tsp.printTour();
+        	
+        	tsp.setTourNeighbours();
+        	tsp.fak();
+        	System.out.println("blu");
+     		System.out.println("Greedy time: " + (System.currentTimeMillis() - start) + " ms");
+        	before = tsp.calculateTourLength(tsp.tour);
+        	//Visualizer vis_2 = new Visualizer(tsp.tour.clone(),500,"Greedy"); 
+        }else
+			tsp.greedyTour();
+		int i = 0;
+        try{
+        	
+            while(i < 1){
+                if(System.currentTimeMillis() > deadline)
+                    break;
+                tsp.twoOptTourTest();
+                i++;
+            }
+            
+        }catch(Exception e) { }
+         System.out.println("Loops " + i);
+         if(DEBUG){
+	        stop = System.currentTimeMillis();
+	        after = tsp.calculateTourLengthTest(tsp.points[0]);
+	       	System.out.println("Tour(Greedy): " + before);
+	       	System.out.println("Tour(2OPT): " + after);
+	        System.out.println("DIFF: " + (before - after));
+	        //Visualizer vis = new Visualizer(tsp.tour.clone(),0,"2OPT"); 
+	        tsp.printTourTest(tsp.points[0]);
+	        tsp.fak();
+	    }else
+	    	tsp.printTour();
+        
+        //timer.interrupt();
+
+		
 	}
 	
 
