@@ -56,9 +56,10 @@ public class StandaloneVisualizer extends JFrame {
 			for(Node node : points){
 				x = new Double(node.x).intValue()*(4);
 				y = new Double(node.y).intValue()*(4);
-				g.drawOval(x, y, 10, 10);
-				g.fillOval(x, y, 10, 10);
-				if(node.equals(points[0])){
+				g.drawOval(x, y, 5, 5);
+                g.drawString(new Integer(node.ID).toString(), x, y);
+				g.fillOval(x, y, 5, 5);
+				/*if(node.equals(points[0])){
 					g.setColor(Color.BLUE);
 					g.fillOval(x-2, y-2, 15, 15);
 				}
@@ -66,7 +67,7 @@ public class StandaloneVisualizer extends JFrame {
 					g.setColor(Color.RED);
 					g.fillOval(x-2, y-2, 15, 15);
 				}
-				g.setColor(Color.BLACK);
+				g.setColor(Color.BLACK);*/
 			}
 
             if(!tree){

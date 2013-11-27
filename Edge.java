@@ -21,6 +21,13 @@ public class Edge implements Comparable{
 			return 0;
 		
 	}
+    
+    public Edge reverse(){
+        
+        return new Edge(b,a,weight);
+    }
+    
+    public double getWeight(){ return weight; }
 
 	public String toString(){
 
