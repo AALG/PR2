@@ -1,18 +1,20 @@
 public class DeadlineTimer implements Runnable {
 
     Thread mainThread;
+    long deadline;
 
-    public DeadlineTimer(Thread t){
+    public DeadlineTimer(Thread t, long deadline){
+        this.deadline = deadline;
         mainThread = t;
-        try{
-            mainThread.checkAccess();        
-        }catch(SecurityException e){ System.out.println("Denied!"); }
+
+
     }
 
 
     public void run() {
         try{
-            Thread.sleep(1500);
+            long currentTime = System.currentTimeMillis();
+            Thread.sleep(deadline - currentTime);
             mainThread.interrupt();
         }catch(InterruptedException e){ }
     }
