@@ -25,6 +25,24 @@ public class Tour{
 		
 	}
 
+	public void randomSwap(){
+		Random rand = new Random();
+		int i = rand.nextInt(tour.length);
+		int j = rand.nextInt(tour.length);
+		int k = rand.nextInt(tour.length);
+		int l = rand.nextInt(tour.length);
+
+		Node tmp;
+		tmp = tour[i];
+		tour[i] = tour[j];
+		tour[j] = tmp;
+
+		//tmp = tour[l];
+		//tour[l] = tour[k];
+		//tour[k] = tmp;
+
+	}
+
 	/**
 	 * Calculate the euclidian distance between
 	 * two points. .

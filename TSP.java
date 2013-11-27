@@ -13,7 +13,7 @@ import java.util.*;
 
 public class TSP{
     
-    static final boolean DEBUG = false;
+    static final boolean DEBUG = true;
 	
 	TSPIO io;	          /* IO functionality */
 	Tour tour;	          /* Holds information about the tour */
@@ -116,8 +116,11 @@ public class TSP{
             	
                 if(System.currentTimeMillis() > deadline)
                     break; 
-                tsp.twoOptTour();
+               	tsp.twoOptTour();
                 tsp.twoHalfOptTour();
+                i++;
+                
+                //tsp.tour.randomSwap();
                                 
             }
             

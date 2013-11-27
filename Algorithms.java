@@ -54,23 +54,50 @@ public class Algorithms{
         Random rand = new Random();
         int p = rand.nextInt(tour.length - 1);
         int N = tour.length;
-        for(int i = p; i < tour.length; i++){
+        double currentResult   = 0;
+        int    currentBestNode = 0;
+        double bestResult      = Double.MIN_VALUE;
+        int limit = 0;
+        int i = 0;
+        while(true){
+            i = rand.nextInt(tour.length - 1);
+            bestResult    = Double.MIN_VALUE;
+            currentResult = -1;
             /* Begin at i + 1 we don't have to evaluate the same node again */
             for(int j = (i + 1) % N; j != i ; j = (j + 1) % N){
                 if(System.currentTimeMillis() > deadline)
                         throw new InterruptedException();
                 /* Swap nodes and calculate the new tour length */
-                swapNodes(i,j,tour);
+                    currentResult = swapNodes(i,j,tour);
+                    if(currentResult >= bestResult && currentResult != -1){
+                        bestResult = currentResult;
+                        currentBestNode = j;
+                    }
             }
- 
+
+            if(bestResult != Double.MIN_VALUE)
+                reverse(i,currentBestNode,tour);
+            limit++;
+            if(limit > tour.length - 1)
+                break;
+        }
+
+    }
+    private void reverse(int i, int j, Node[] tour){
+        int c = j;
+        Node tmp;
+        for(int p = i; p <= c; p++){
+                tmp = tour[p];
+                tour[p] = tour[c];
+                tour[c] = tmp;
+                c--;
         }
     }
- 
  	/**
  	*	Performs a swap of two edges in a given tour 
  	*	if the swap yields a shorter tour.
  	**/
-    private boolean swapNodes(int i, int j, Node[] tour){
+    private double swapNodes(int i, int j, Node[] tour){
         if( i > j ){
                         int t = i;
                         i = j;
@@ -78,7 +105,7 @@ public class Algorithms{
         }
         /* If below statement is true, it's not necessary to swap */
         if(i == 0 && j == tour.length - 1){
-                return false;
+                return -1;
         }
  
         Node iNode = tour[i];
@@ -104,50 +131,55 @@ public class Algorithms{
  
         /* The swap won't yield a better tour */
         if(edgeDistanceAfter >= edgeDistanceBefore )
-                return false;
+                return -1;
         /* The swap will probably make the tour shorter */
-        int c = j;
-        Node tmp;
-        for(int p = i; p <= c; p++){
-                tmp = tour[p];
-                tour[p] = tour[c];
-                tour[c] = tmp;
-                c--;
-        }
+      
  
-        return true;
+        return (edgeDistanceBefore - edgeDistanceAfter);
     }
 
     public void twoAndHalfOpt(long deadline) throws InterruptedException{
         tspTour.setTourNeighbours();
-   
-        Node A = tspTour.tour[0];
-        Node B = tspTour.tour[1];
+        Random rand = new Random();
+        int start = rand.nextInt(tspTour.tour.length);
+
+        Node A = tspTour.tour[start];
+        Node B = tspTour.tour[start+1];
         Node C;
         Node Cprev;
-        boolean swapped;
+        double currentResult;
+        double bestResult;
+        Node currentBestNode;
         int i = 0;
         
         while(i < tspTour.tour.length){
             if(System.currentTimeMillis() > deadline)
                 throw new InterruptedException();
-            swapped = false;
+            currentResult = 0;
+            bestResult = Double.MIN_VALUE;
+            currentBestNode = null;
             C     = B.getNextTourNeighbour(A);
             Cprev = B;
             while(C.ID != A.ID){
                 if(System.currentTimeMillis() > deadline)
                         throw new InterruptedException();
                 
-                swapped = insert(A,B,C);     
-                if(swapped)
-                    break;
+                currentResult = checkInsert(A,B,C);
+                if(currentResult > bestResult && currentResult != -1){
+                    currentBestNode = C;
+                    bestResult = currentResult;
+                }     
+
                 Node tmp = C;
                 C        = C.getNextTourNeighbour(Cprev);
                 Cprev    = tmp;
             }
             
-            if(swapped){
-                break;
+            if(currentBestNode != null){
+                insert(A,B,currentBestNode);
+                Node tmp = A;
+                A = B.getNextTourNeighbour(currentBestNode);
+                B = A.getNextTourNeighbour(B);
             }else{
                 Node tmp = B;
                 B = B.getNextTourNeighbour(A);
@@ -159,7 +191,20 @@ public class Algorithms{
         tspTour.createTourArray(tspTour.tour[0]);
     }
     
-    public boolean insert(Node A, Node B, Node C){
+    public void insert(Node A, Node B, Node C){
+
+        /* Insert C between A and B. A - > B => A -> C -> B */    
+        A.reconnect(B,C);
+        B.reconnect(A,C);
+        /* Merge connection between neighbours of C */
+        C.tourNeighbour1.reconnect(C,C.tourNeighbour2);
+        C.tourNeighbour2.reconnect(C,C.tourNeighbour1);
+        /* Update C */
+        C.reconnect(C.tourNeighbour1, A);
+        C.reconnect(C.tourNeighbour2, B);
+    }
+
+    public double checkInsert(Node A, Node B, Node C){
         double distanceBeforeInsert;
         double distanceAfterInsert;
         
@@ -172,19 +217,10 @@ public class Algorithms{
         distanceAfterInsert += tspTour.getDistanceFromMatrix(C.tourNeighbour1, C.tourNeighbour2);
         
         if(distanceBeforeInsert <= distanceAfterInsert)
-            return false;
+            return -1.0;
         
-        /* Insert C between A and B. A - > B => A -> C -> B */    
-        A.reconnect(B,C);
-        B.reconnect(A,C);
-        /* Merge connection between neighbours of C */
-        C.tourNeighbour1.reconnect(C,C.tourNeighbour2);
-        C.tourNeighbour2.reconnect(C,C.tourNeighbour1);
-        /* Update C */
-        C.reconnect(C.tourNeighbour1, A);
-        C.reconnect(C.tourNeighbour2, B);
         
-        return true;
+        return (distanceBeforeInsert - distanceAfterInsert);
         
       
     
