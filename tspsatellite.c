@@ -16,12 +16,21 @@ struct Node
     short ID;
 };
 
+struct Edge
+{
+	short A;
+	short B;
+};
+
+
 short * satellites;
 short * satellitesRecord;
 short * sTour;
 int numberOfPoints;
+int numberOfEdges;
 float * distanceMatrix;
 struct Node * points;
+struct Edge * edges;
 struct Node * tour; 
 int loops = 0;
 float greedyLength = 0;
@@ -158,14 +167,19 @@ void createDistanceMatrix(){
 
 	/* Allocate matrix */
 	distanceMatrix = (float *)malloc(sizeof(float)*numberOfPoints*numberOfPoints);
+	edges          = (struct Edge *)malloc(sizeof(struct Edge)*((numberOfPoints*numberOfPoints/2) + 1));
 	int i;
 	int j;
-
+	int edgeCount = 0;
 	for(i = 0; i < numberOfPoints - 1; i++)
 		for(j = i + 1; j < numberOfPoints; j++){
 			distanceMatrix[i*numberOfPoints + j] = dist(&points[i], &points[j]);
+			/* Create edges */
+			edges[edgeCount].A = points[i].ID;
+			edges[edgeCount].B = points[j].ID;
+			edgeCount++;
 		}
-
+		numberOfEdges = edgeCount;
 }
 
 float getDistanceFromMatrix(int i, int j){
@@ -176,6 +190,24 @@ float getDistanceFromMatrix(int i, int j){
 		return FLT_MAX;
 	}
 		return distanceMatrix[i*numberOfPoints +j];
+}
+
+
+static int compareEdge(const void * this, const void * other){
+	struct Edge * edge_1 = (struct Edge *) this;
+	struct Edge * edge_2 = (struct Edge *)other;
+
+	float dist_1 = getDistanceFromMatrix(edge_1->A, edge_1->B);
+	float dist_2 = getDistanceFromMatrix(edge_2->A, edge_2->B);
+
+	if(dist_1 < dist_2){
+		return -1;
+	}else if(dist_1 > dist_2){
+		return 1;
+	}else{
+		return 0;
+	}
+
 }
 
 void reverse(short a, short b, short c, short d){
@@ -254,6 +286,9 @@ void greedyTour(){
  	//free(used);
 
  }
+
+
+
 
 void convertStourToSat(){
 
@@ -449,10 +484,18 @@ void initSat(){
 }
 
 
+void printEdges(){
+	qsort(edges,(size_t)numberOfEdges, sizeof(struct Edge),compareEdge);
+	//int i;
+	//for(i = 0; i < numberOfEdges; i++){
+	//	printf("[%d-%d]: %f\n", edges[i].A, edges[i].B, getDistanceFromMatrix(edges[i].A, edges[i].B));
+	//}
+}
 
 void interruptHandler(int sig){
     satellites = satellitesRecord;
-    printSatTour();
+    //printSatTour();
+    printEdges();
     fprintf(stderr, "Iterations: %d\n", iterations);
     float tourLength = calculateSatTourLength();
     fprintf(stderr, "Length: %f\n", tourLength);
@@ -479,6 +522,9 @@ void randomInsert(){
 
 }
 
+
+
+
 int main(){
     iterations = 0;
 	int pid;
@@ -492,6 +538,8 @@ int main(){
 		signal(SIGINT,interruptHandler);
 		initializePoints();	
 		createDistanceMatrix();
+		printEdges();
+		exit(0);
         initSat();
 		greedyTour();
         //convertStourToSat();
@@ -514,7 +562,7 @@ int main(){
                 twoAndAHalfOpt();
                 newRecord = calculateSatTourLength();
                 //fprintf(stderr, "OldRecord: %f\nNewRecord: %f\n", oldRecord, newRecord);
-                if(((abs(intermediary - newRecord)/intermediary) < 0.001)){
+                if(((abs(intermediary - newRecord)/intermediary) < 0.01)){
                     break;
                 }
                 intermediary = newRecord;
