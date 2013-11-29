@@ -7,26 +7,27 @@
 #include <time.h>
 #include <stdint.h>
 #include <float.h>
-
-
-
+#include <string.h>
 
 struct Node
 {
-    double x;
-    double y;
-    int ID;
+    float x;
+    float y;
+    short ID;
 };
 
 short * satellites;
+short * satellitesRecord;
 short * sTour;
 int numberOfPoints;
-double ** distanceMatrix;
+float * distanceMatrix;
 struct Node * points;
 struct Node * tour; 
 int loops = 0;
-double greedyLength = 0;
+float greedyLength = 0;
 int iterations;
+
+/* #### SATELLITE GETS AND SETS #### */
 
 short getCity(short sat_ind){
 
@@ -83,12 +84,20 @@ short getPrevSat(short sat_ind){
 
 }
 
-
+/* #### PRINT FUNCTIONS #### */
 
 void printTour(){
 	int i = 0;
 	while(i < numberOfPoints){
 		printf("%d\n", tour[i].ID);
+		i++;
+	}
+}
+
+void printSTour(){
+	int i = 0;
+	while(i < numberOfPoints){
+		printf("%d\n", sTour[i]);
 		i++;
 	}
 }
@@ -119,13 +128,13 @@ void initializePoints(){
 		printf("Failure\n");
 	
 	points = (struct Node *)malloc(sizeof(struct Node)*numberOfPoints);
-	double x;
-	double y;
+	float x;
+	float y;
 	int ID;
 	/* Read co-ordinates */
 	int i = 0;
 	while(i < numberOfPoints ){
-		if( scanf("%lf %lf", &x, &y) == EOF )
+		if( scanf("%f %f", &x, &y) == EOF )
 			printf("Failure\n");
 		points[i].x  = x;
 		points[i].y  = y;
@@ -135,10 +144,10 @@ void initializePoints(){
 
 }
 
-double dist(struct Node * n1, struct Node * n2){
+float dist(struct Node * n1, struct Node * n2){
 
-	double diffx = pow(n1->x - n2->x, 2);
-	double diffy = pow(n1->y - n2->y, 2);
+	float diffx = pow(n1->x - n2->x, 2);
+	float diffy = pow(n1->y - n2->y, 2);
 
 	return sqrt(diffx + diffy);
 
@@ -148,83 +157,25 @@ void createDistanceMatrix(){
 
 
 	/* Allocate matrix */
-	distanceMatrix = (double **)malloc(sizeof(double*)*numberOfPoints);
+	distanceMatrix = (float *)malloc(sizeof(float)*numberOfPoints*numberOfPoints);
 	int i;
 	int j;
-	for(i = 0; i < numberOfPoints; i++){
-		distanceMatrix[i] = (double *)malloc(sizeof(double)*numberOfPoints);
-	}
 
 	for(i = 0; i < numberOfPoints - 1; i++)
 		for(j = i + 1; j < numberOfPoints; j++){
-			distanceMatrix[i][j] = dist(&points[i], &points[j]);
+			distanceMatrix[i*numberOfPoints + j] = dist(&points[i], &points[j]);
 		}
 
 }
 
-double getDistanceFromMatrix(int i, int j){
+float getDistanceFromMatrix(int i, int j){
 	
 	if(i > j){
-		return distanceMatrix[j][i];
+		return distanceMatrix[j*numberOfPoints +i];
 	}else if(i == j){
-		return DBL_MAX;
+		return FLT_MAX;
 	}
-		return distanceMatrix[i][j];
-}
-
-
-int swapNodes(int i, int j){
-	
-
-	if(j < i){
-		int tmp;
-		tmp = i;
-		i = j;
-		j = tmp;
-	}
-
-	if(i == 0 && j == numberOfPoints - 1 || i == j)
-		return 0;
-   
-    short iNode = sTour[i];
-    short jNode = sTour[j];
-	double edgeDistanceBefore = 0;
-	double edgeDistanceAfter  = 0;
-
-	if( i != 0){
-		edgeDistanceBefore = getDistanceFromMatrix(iNode, sTour[i-1]);
-		edgeDistanceAfter  = getDistanceFromMatrix(jNode, sTour[i-1]);
-	}
-	else{
-		edgeDistanceBefore = getDistanceFromMatrix(iNode, sTour[numberOfPoints-1]);
-		edgeDistanceAfter  = getDistanceFromMatrix(jNode, sTour[numberOfPoints-1]);
-	}
-
-	if( j != numberOfPoints - 1){
-		edgeDistanceBefore += getDistanceFromMatrix(jNode, sTour[j+1]);
-		edgeDistanceAfter  += getDistanceFromMatrix(iNode, sTour[j+1]);
-	}else{
-		edgeDistanceBefore += getDistanceFromMatrix(jNode, sTour[0]);
-		edgeDistanceAfter  += getDistanceFromMatrix(iNode, sTour[0]);
-	}
-
-	/* The swap didn't yield a shorter path */
-	if(edgeDistanceBefore <= edgeDistanceAfter)
-		return 0;
-	/* The swap did yield a shorter path */
-	
-	int c = j
-;	int p = 0;
-	short tmp;
-
-	for(p = i ; p <= c; p++){
-		tmp     = sTour[p];
-		sTour[p] = sTour[c];
-		sTour[c] = tmp;
-		c--;
-	}
-	
-	return 1;
+		return distanceMatrix[i*numberOfPoints +j];
 }
 
 void reverse(short a, short b, short c, short d){
@@ -237,13 +188,13 @@ void reverse(short a, short b, short c, short d){
 
 }
 
-double swapNodesCheck(short iNodeSat, short jNodeSat){
+float swapNodesCheck(short iNodeSat, short jNodeSat){
 
     if(getCity(iNodeSat) == getCity(jNodeSat))
 		return -1;
 
-	double edgeDistanceBefore = 0;
-	double edgeDistanceAfter  = 0;
+	float edgeDistanceBefore = 0;
+	float edgeDistanceAfter  = 0;
 
     edgeDistanceBefore = getDistanceFromMatrix(getCity(iNodeSat), getCity(getPrevSat(iNodeSat)));
     edgeDistanceAfter = getDistanceFromMatrix(getCity(jNodeSat), getCity(getPrevSat(iNodeSat)));
@@ -291,16 +242,16 @@ void greedyTour(){
  					bestCity = currentCity;
  		}
  		sTour[i] = bestCity;
-        /*setNext(sTour[i-1], sTour[i]);
-        setPrev(sTour[i], sTour[i-1]);*/
+        setNext(sTour[i-1], sTour[i]);
+        setPrev(sTour[i], sTour[i-1]);
         
  		used[bestCity] = 1;
  	}
-    /*
+   
     setNext(sTour[numberOfPoints-1], sTour[0]);
-    setPrev(sTour[numberOfPoints-1], sTour[numberOfPoints-2]);
-    */
- 	free(used);
+    //setPrev(sTour[numberOfPoints-1], sTour[numberOfPoints-2]);
+    setPrev(sTour[0], sTour[numberOfPoints-1]);
+ 	//free(used);
 
  }
 
@@ -317,26 +268,15 @@ void convertStourToSat(){
     setPrev(sTour[numberOfPoints-1], sTour[numberOfPoints-2]);
 }
 
-
-void twoOptTour(){
-
- 	int i;
- 	int j;
-	
- 	for(i = rand() / numberOfPoints; i < numberOfPoints; i++)
- 		for(j = (i + 1) % numberOfPoints ; j != i; j = (j+1) % numberOfPoints){
- 			swapNodes(i,j);
- 		}
-}
-
-
-void twoOptSatTour(){
+float twoOptSatTour(){
 
     short startNode = (rand() % (numberOfPoints*2));
 
-    double currentResult;
-    double bestResult;    
+    float currentResult;
+    float bestResult;    
     short currentBestSat;
+    
+    float totalLoss = 0;
 
     //fprintf(stderr, "%d\n", startNode);
     short iNodeSat = startNode;
@@ -358,18 +298,20 @@ void twoOptSatTour(){
 
         }while(jNodeSat != iNodeSat);
         if(bestResult != -10){
-            swapNodesSat(iNodeSat, currentBestSat);        
+            swapNodesSat(iNodeSat, currentBestSat);
+            totalLoss += bestResult;    
         }
         iNodeSat = getNextSat(iNodeSat);
         jNodeSat = iNodeSat;
     }
 
+    return totalLoss;
 }
 
-double checkInsert(short aNodeSat, short bNodeSat, short cNodeSat){
+float checkInsert(short aNodeSat, short bNodeSat, short cNodeSat){
 
-    double distanceBeforeInsert;
-    double distanceAfterInsert;
+    float distanceBeforeInsert;
+    float distanceAfterInsert;
     
     distanceBeforeInsert = getDistanceFromMatrix(
                                       getCity(aNodeSat),
@@ -419,7 +361,7 @@ int insert(short aNodeSat, short bNodeSat, short cNodeSat){
 
 }
 
-void twoAndAHalfOpt(){
+float twoAndAHalfOpt(){
 
     short N = rand() % numberOfPoints;
     
@@ -433,10 +375,12 @@ void twoAndAHalfOpt(){
     char swapped;
     short tmp;
 
-    double currentResult;
-    double bestResult;
+    float currentResult;
+    float bestResult;
 
     short currentBestSat;
+
+    float totalLoss = 0;
 
     while(i < N){
         swapped = 0;    
@@ -451,7 +395,7 @@ void twoAndAHalfOpt(){
             if(currentResult > bestResult && currentResult != -1){
                 currentBestSat = cNodeSat;
                 bestResult = currentResult;
-                break;            
+                //break;            
             }
             cNodeSat = getNextSat(cNodeSat);
             
@@ -460,6 +404,7 @@ void twoAndAHalfOpt(){
         }
         if(currentBestSat != -1){
             insert(aNodeSat, bNodeSat, currentBestSat);
+            totalLoss += bestResult;
             
             //aNodeSat = cNodeSat;        
         }
@@ -469,34 +414,11 @@ void twoAndAHalfOpt(){
         i++;
     }
 
+    return totalLoss;
 }
 
-
-long specialIntExp(int exp){
-
-    int i;
-    long res = 1;
-    for(i = 0; i < exp; i++){
-        res *= 10;
-        fprintf(stderr, "%ld\n", res);
-    }
-    
-    return res;
-}
-
-void printSTour(){
-	int i = 0;
-	while(i < numberOfPoints){
-		printf("%d\n", sTour[i]);
-		i++;
-	}
-}
-
-
-
-
-double calculateTourLength(){
-	double tourLength = 0;
+float calculateTourLength(){
+	float tourLength = 0;
 	int i;
 	for(i = 1; i < numberOfPoints; i++){
 		tourLength += getDistanceFromMatrix(sTour[i-1], sTour[i]);
@@ -505,9 +427,9 @@ double calculateTourLength(){
 	return tourLength;
 }
 
-double calculateSatTourLength(){
+float calculateSatTourLength(){
 
-    double tourLength = 0;
+    float tourLength = 0;
     int i;
     short currSat = 0;
     short prevSat = 0;
@@ -523,21 +445,38 @@ void initSat(){
 
     const int satelliteL = numberOfPoints << 1;
     satellites = (short*)malloc(satelliteL*sizeof(short));
+    satellitesRecord = (short*)malloc(satelliteL*sizeof(short));
 }
 
 
 
 void interruptHandler(int sig){
+    satellites = satellitesRecord;
     printSatTour();
     fprintf(stderr, "Iterations: %d\n", iterations);
-    double tourLength = calculateSatTourLength();
-    fprintf(stderr, "Length: %lf\n", tourLength);
+    float tourLength = calculateSatTourLength();
+    fprintf(stderr, "Length: %f\n", tourLength);
     greedyTour();
     tourLength = calculateTourLength();
-    fprintf(stderr, "Greedy length: %lf\n", tourLength);
+    fprintf(stderr, "Greedy length: %f\n", tourLength);
     
         
     exit(0);
+}
+
+void randomInsert(){
+
+    short aNodeSat = (rand() % numberOfPoints)*2;
+
+    short cNodeSat = (rand() % numberOfPoints)*2;
+
+    if(getCity(aNodeSat) == getCity(cNodeSat) || 
+       getCity(getNextSat(aNodeSat)) == getCity(cNodeSat) ||
+       getCity(getPrevSat(aNodeSat)) == getCity(cNodeSat))
+            return;
+
+    insert(aNodeSat, getNextSat(aNodeSat), cNodeSat);
+
 }
 
 int main(){
@@ -555,15 +494,40 @@ int main(){
 		createDistanceMatrix();
         initSat();
 		greedyTour();
+        //convertStourToSat();
+        
+        memcpy(satellitesRecord, satellites, sizeof(short)*numberOfPoints*2);
         //NNSatTour();
-        convertStourToSat();
+        
         int i;
+        int j;
+        float oldRecord = 0;
+        float newRecord = 0;
+        float intermediary = 0;
+        float loss = 0;
+        oldRecord = calculateSatTourLength();
+        intermediary = oldRecord;
 		while(2 > 1){
             iterations++;
-			twoOptSatTour();
-            //for(i = 0; i < 2; i++)
+            while(2 > 1){
+			    twoOptSatTour();
                 twoAndAHalfOpt();
-
+                newRecord = calculateSatTourLength();
+                //fprintf(stderr, "OldRecord: %f\nNewRecord: %f\n", oldRecord, newRecord);
+                if(((abs(intermediary - newRecord)/intermediary) < 0.001)){
+                    break;
+                }
+                intermediary = newRecord;
+            }
+            
+            //newRecord = calculateSatTourLength();
+            //newRecord = intermediary_a;
+            if(newRecord < oldRecord){
+                memcpy(satellitesRecord, satellites, sizeof(short)*numberOfPoints*2);
+                oldRecord = newRecord;
+            }
+            for(i = 0; i < 1; i++)
+                randomInsert();
 		}
 	}
 	return 0;
